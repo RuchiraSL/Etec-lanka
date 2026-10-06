@@ -1,44 +1,38 @@
-plugins {
-    id 'com.android.application'
-}
+name: Build Android APK
 
-android {
-    namespace 'lk.etec.pos'
-    compileSdk 34
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
 
-    defaultConfig {
-        applicationId "lk.etec.pos"
-        minSdk 29          // Android 10 or newer
-        targetSdk 34
-        versionCode 1
-        versionName "1.0"
-    }
-    // Signing for the release build: only used when the GitHub Action (or you) provide these values
-    signingConfigs {
-        release {
-            if (System.getenv("KEYSTORE_FILE")) {
-                storeFile file(System.getenv("KEYSTORE_FILE"))
-                storePassword System.getenv("KEYSTORE_PASSWORD")
-                keyAlias System.getenv("KEY_ALIAS")
-                keyPassword System.getenv("KEY_PASSWORD")
-            }
-        }
-    }
-    buildTypes {
-        release {
-            minifyEnabled false
-            if (System.getenv("KEYSTORE_FILE")) signingConfig signingConfigs.release
-        }
-    }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-}
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-dependencies {
-    // keeps every Kotlin library on the same version (fixes "Duplicate class kotlin..." errors)
-    implementation platform('org.jetbrains.kotlin:kotlin-bom:1.8.22')
-    implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'androidx.webkit:webkit:1.11.0'
-}
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Accept Android SDK licenses
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Build debug APK
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: etec-pos-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
