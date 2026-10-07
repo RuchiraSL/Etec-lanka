@@ -71,6 +71,10 @@ public class MainActivity extends AppCompatActivity {
         WebSettings st = webView.getSettings();
         st.setJavaScriptEnabled(true);
         st.setDomStorageEnabled(true);          // keeps the Supabase login between launches
+        st.setTextZoom(100);                    // ignore the phone's font-size setting so the layout always fits
+        st.setSupportZoom(false);
+        st.setBuiltInZoomControls(false);
+        st.setLoadWithOverviewMode(false);
         st.setAllowFileAccess(false);
         st.setAllowContentAccess(false);
         st.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
